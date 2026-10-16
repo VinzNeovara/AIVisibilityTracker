@@ -1,346 +1,144 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Neovara AI Visibility Programme</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com/3.4.17"></script>
-<script>tailwind.config={darkMode:"media",theme:{extend:{colors:{navy:{DEFAULT:"#1F2144",7:"#2C2F5C",9:"#161832"},beige:{DEFAULT:"#F5F1EB",1:"#EDE7DB",2:"#E2D9C8"},powder:"#DDE7F2",steel:"#5F7FA3",coral:{DEFAULT:"#E86F51",6:"#C9553B"},grey:{4:"#A4AAB3",7:"#6C7078"},ok:"#3F7D5C",ink:{DEFAULT:"#121427",2:"#1B1D3A"}},fontFamily:{sans:["Poppins","system-ui","-apple-system","Segoe UI","Roboto","sans-serif"]}}}};</script>
-<style>
-  /* The Lean: Neovara's angled signature, plus things Tailwind can't express cleanly */
-  .lean{transform:skewX(-24deg)}
-  .lean-bar{clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
-  :focus-visible{outline:2px solid #E86F51;outline-offset:2px}
-  html{scroll-padding-top:env(safe-area-inset-top,0px)}
-  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
-  #boot{font-family:Poppins,system-ui,sans-serif;padding:40px 24px;color:#1F2144}
-</style>
-</head>
-<body class="bg-beige text-navy dark:bg-ink dark:text-beige font-sans antialiased text-[15px] leading-relaxed" style="padding-bottom:env(safe-area-inset-bottom,0px)">
-<div id="root"><p id="boot">Loading the tracker…</p></div>
-<noscript><p style="padding:24px;font-family:sans-serif">This tracker needs JavaScript turned on.</p></noscript>
-<i id="logo" hidden data-src="data:image/png;base64,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"></i>
-<script type="application/json" id="default-state">{"v": 1, "updated": null, "tasks": [{"id": "t1", "win": "w1", "ws": "Technical access", "title": "Open robots.txt to GPTBot, OAI-SearchBot, ChatGPT-User, ClaudeBot, PerplexityBot, Google-Extended", "due": "2026-10-16", "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t2", "win": "w1", "ws": "Technical access", "title": "Verify site in Bing Webmaster Tools and turn on IndexNow", "due": "2026-10-16", "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t3", "win": "w1", "ws": "Technical access", "title": "Check key pages render in HTML, not JavaScript only; add llms.txt (optional)", "due": "2026-10-16", "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t4", "win": "w1", "ws": "Measurement", "title": "Get HubSpot AEO access, load the 15 queries, record the baseline", "due": "2026-10-23", "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t5", "win": "w1", "ws": "Entity foundation", "title": "Write the canonical one-sentence Neovara description", "due": "2026-10-23", "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t6", "win": "w1", "ws": "Entity foundation", "title": "Apply the description to website, LinkedIn, Google Business Profile, Crunchbase, DMCC directory, Dubai Chamber", "due": "2026-10-30", "q": "1, 2", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t7", "win": "w1", "ws": "Entity foundation", "title": "Add Organization, Service, FAQ and Person (founder) schema", "due": "2026-10-30", "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t8", "win": "w1", "ws": "Original data", "title": "Launch the survey for the UAE F&B Data Readiness Report (50–100 operators)", "due": "2026-10-30", "q": "9, 10", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t9", "win": "w1", "ws": "Answer-first content", "title": "Publish pages for queries 1, 3, 4, 7", "due": "2026-11-10", "q": "1, 3, 4, 7", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t10", "win": "w2", "ws": "Third-party corroboration", "title": "Start press pitching: Hotelier ME, Caterer ME, Gulf News, Khaleej Times, Arabian Business, Zawya", "due": "2026-11-18", "q": "1, 2", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t11", "win": "w2", "ws": "Entity foundation", "title": "Set up Clutch and GoodFirms profiles", "due": "2026-11-20", "q": "1, 2", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t12", "win": "w2", "ws": "Third-party corroboration", "title": "Outreach for inclusion in \"top AI companies in Dubai/UAE\" listicles", "due": "2026-11-27", "q": "1, 2", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t13", "win": "w2", "ws": "Third-party corroboration", "title": "Get listed on partner directories: DMCC AI Centre, POS integration marketplaces, introducer partners", "due": "2026-12-04", "q": "2, 4", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t14", "win": "w2", "ws": "Proof and reviews", "title": "Run the client review drive on Google and Clutch, asking for service and city in the wording", "due": "2026-12-10", "q": "1, 5, 11", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t15", "win": "w2", "ws": "Answer-first content", "title": "Publish pages for queries 5, 6, 8, 11, 12", "due": "2026-12-10", "q": "5, 6, 8, 11, 12", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t16", "win": "w3", "ws": "Original data", "title": "Publish the data report with a press release", "due": "2026-12-17", "q": "2, 9, 10", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t17", "win": "w3", "ws": "Third-party corroboration", "title": "Seamless Middle East 2026: secure agenda listing and recap mentions", "due": "2026-12-31", "q": "1, 2", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t18", "win": "w3", "ws": "Answer-first content", "title": "Publish pages for queries 2, 9, 10, 13, 14, 15", "due": "2027-01-09", "q": "2, 9, 10, 13, 14, 15", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t19", "win": "w3", "ws": "Answer-first content", "title": "Refresh wave-1 pages with new dates and numbers", "due": "2027-01-09", "q": "1, 3, 4, 7", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t20", "win": "w3", "ws": "Measurement", "title": "Compare visibility against the baseline and report to Greg", "due": "2027-01-09", "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t21", "win": "on", "ws": "Third-party corroboration", "title": "Greg posts on LinkedIn on the query topics (drafts from Vinz)", "due": null, "q": "All", "owner": "Greg", "status": "To do", "notes": ""}, {"id": "t22", "win": "on", "ws": "Third-party corroboration", "title": "Answer real questions on Reddit (r/dubai, r/restaurateur) and Quora, transparently", "due": null, "q": "3, 7, 9", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t23", "win": "on", "ws": "Proof and reviews", "title": "Publish named case studies with before/after numbers (client-approved)", "due": null, "q": "1, 5, 8", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t24", "win": "on", "ws": "Answer-first content", "title": "Map 1st and 3rd Wednesday blog slots to the 15 queries", "due": null, "q": "All", "owner": "Vinz", "status": "To do", "notes": ""}, {"id": "t25", "win": "on", "ws": "Answer-first content", "title": "Arabic versions of the top five pages (optional)", "due": null, "q": "1, 3, 4, 5, 7", "owner": "Vinz", "status": "To do", "notes": ""}], "queries": [{"n": 1, "q": "Best AI consultancy for restaurants in Dubai", "stage": "Decision", "build": "Service hub page + listicle placements + reviews", "wave": "w1", "due": "2026-11-10", "status": "Not started", "url": ""}, {"n": 2, "q": "AI companies in the UAE that work with F&B and hospitality", "stage": "Consideration", "build": "Directory and press coverage; entity consistency", "wave": "w3", "due": "2027-01-09", "status": "Not started", "url": ""}, {"n": 3, "q": "How can AI help my restaurant in Dubai?", "stage": "Awareness", "build": "Pillar guide with use cases, costs, timelines", "wave": "w1", "due": "2026-11-10", "status": "Not started", "url": ""}, {"n": 4, "q": "How do I combine POS data from multiple branches into one dashboard?", "stage": "Consideration", "build": "POS Data Unification Checklist page (optimise existing)", "wave": "w1", "due": "2026-11-10", "status": "Not started", "url": ""}, {"n": 5, "q": "Who can build a custom AI agent for my restaurant or hotel group in the UAE?", "stage": "Decision", "build": "AI agents service page + case study", "wave": "w2", "due": "2026-12-10", "status": "Not started", "url": ""}, {"n": 6, "q": "What is an AI digital employee and can a restaurant use one?", "stage": "Awareness", "build": "Explainer using Layla as the worked example", "wave": "w2", "due": "2026-12-10", "status": "Not started", "url": ""}, {"n": 7, "q": "How much does it cost to implement AI in a restaurant in the UAE?", "stage": "Evaluation", "build": "Pricing-ranges page", "wave": "w1", "due": "2026-11-10", "status": "Not started", "url": ""}, {"n": 8, "q": "Data consultancy for SMEs in Dubai", "stage": "Consideration", "build": "Data architecture service page", "wave": "w2", "due": "2026-12-10", "status": "Not started", "url": ""}, {"n": 9, "q": "How to reduce food cost and waste with AI in UAE restaurants", "stage": "Awareness", "build": "Data-led article with benchmarks", "wave": "w3", "due": "2027-01-09", "status": "Not started", "url": ""}, {"n": 10, "q": "AI demand forecasting and staff scheduling for cafés in the GCC", "stage": "Consideration", "build": "Use-case page with sample outputs", "wave": "w3", "due": "2027-01-09", "status": "Not started", "url": ""}, {"n": 11, "q": "Outsourced back-office and reconciliation for restaurants in Dubai", "stage": "Decision", "build": "Back-office service page", "wave": "w2", "due": "2026-12-10", "status": "Not started", "url": ""}, {"n": 12, "q": "How should UAE restaurants prepare for e-invoicing?", "stage": "Awareness", "build": "Readiness guide (ties to ASP track)", "wave": "w2", "due": "2026-12-10", "status": "Not started", "url": ""}, {"n": 13, "q": "Restaurant data privacy and PDPL compliance in the UAE", "stage": "Awareness", "build": "Governance guide + checklist", "wave": "w3", "due": "2027-01-09", "status": "Not started", "url": ""}, {"n": 14, "q": "AI training for hospitality teams in the UAE", "stage": "Consideration", "build": "AI enablement service page + workshop outline", "wave": "w3", "due": "2027-01-09", "status": "Not started", "url": ""}, {"n": 15, "q": "Alternatives to Foodics reporting for multi-brand restaurant groups", "stage": "Evaluation", "build": "Fair, factual comparison page", "wave": "w3", "due": "2027-01-09", "status": "Not started", "url": ""}], "results": {}, "targets": {"2026-11": 2, "2026-12": 3, "2027-01": 5, "2027-02": 7, "2027-03": 8, "2027-04": 10}, "decisions": [{"id": "d1", "title": "Grant HubSpot AEO access", "why": "Unblocks the baseline and automated monthly tracking of all 15 queries.", "due": "This week", "date": "2026-10-16", "status": "Pending"}, {"id": "d2", "title": "Approve the data report", "why": "UAE F&B Data Readiness Report; survey of 50–100 operators in the first 30 days.", "due": "By 16 Oct", "date": "2026-10-16", "status": "Pending"}, {"id": "d3", "title": "Sign off the canonical description", "why": "One sentence, used word for word on every profile.", "due": "By 23 Oct", "date": "2026-10-23", "status": "Pending"}, {"id": "d4", "title": "Commit to a LinkedIn cadence", "why": "Posts from Greg on the query topics; drafts can come from Vinz.", "due": "From November", "date": "2026-11-02", "status": "Pending"}, {"id": "d5", "title": "Clear client approvals", "why": "Named case studies and review requests, starting with existing clients.", "due": "Days 31–60", "date": "2026-11-11", "status": "Pending"}], "log": []}</script>
-<script>(function(){
-"use strict";
-var KEY = "neovara-ai-visibility-v1";
-var DEFAULT = JSON.parse(document.getElementById("default-state").textContent);
-var STATE = load();
-var START = new Date("2026-10-12T00:00:00"), END = new Date("2027-01-09T00:00:00");
-var ASSISTANTS = ["ChatGPT","Gemini","Claude","Perplexity","Google AI Overviews"];
-var MONTHS = ["2026-10","2026-11","2026-12","2027-01","2027-02","2027-03","2027-04"];
-var MONTH_LABEL = {"2026-10":"Oct 2026 (baseline)","2026-11":"Nov 2026","2026-12":"Dec 2026","2027-01":"Jan 2027","2027-02":"Feb 2027","2027-03":"Mar 2027","2027-04":"Apr 2027"};
-var WINDOWS = [
-  {id:"w1",name:"Days 1–30",from:"2026-10-12",to:"2026-11-10"},
-  {id:"w2",name:"Days 31–60",from:"2026-11-11",to:"2026-12-10"},
-  {id:"w3",name:"Days 61–90",from:"2026-12-11",to:"2027-01-09"},
-  {id:"on",name:"Ongoing",from:"2026-10-12",to:null}];
-var WORKSTREAMS = ["Technical access","Entity foundation","Answer-first content","Original data","Third-party corroboration","Proof and reviews","Measurement"];
-var STATUSES = ["To do","In progress","Blocked","Done"];
-var PAGE_STATUSES = ["Not started","Drafting","In review","Published","Refreshing"];
-var MILESTONES = [
-  {d:"2026-10-21",k:"blog",t:"Blog slot (3rd Wed)"},{d:"2026-11-04",k:"blog",t:"Blog slot (1st Wed)"},
-  {d:"2026-11-18",k:"blog",t:"Blog slot (3rd Wed)"},{d:"2026-12-02",k:"blog",t:"Blog slot (1st Wed)"},
-  {d:"2026-12-16",k:"blog",t:"Blog slot (3rd Wed)"},{d:"2027-01-06",k:"blog",t:"Blog slot (1st Wed)"},
-  {d:"2026-11-02",k:"track",t:"Monthly visibility check"},{d:"2026-12-01",k:"track",t:"Monthly visibility check"},
-  {d:"2027-01-04",k:"track",t:"Monthly visibility check"}];
+-- Neovara AI Visibility tracker: Supabase setup
+-- Run once in Supabase: SQL Editor > New query > paste > Run.
+-- Then edit the emails in step 1 to your team's real addresses.
 
-/* shared class strings */
-var CARD = "bg-white dark:bg-ink-2 border border-beige-2 dark:border-navy-7 rounded-xl p-5 sm:p-6 mb-5";
-var H2 = "text-[17px] font-semibold mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1";
-var SMALL = "text-[12.5px] font-light text-grey-7 dark:text-grey-4";
-var MUTED = "text-grey-7 dark:text-grey-4";
-var FIELD = "font-sans text-[13.5px] text-navy dark:text-beige bg-white dark:bg-ink-2 border border-beige-2 dark:border-navy-7 rounded px-2 py-1.5 max-w-full";
-var BTN = "font-sans text-[13.5px] font-medium bg-navy text-beige dark:bg-beige dark:text-navy rounded px-3.5 py-2 hover:bg-navy-7 dark:hover:bg-beige-2 whitespace-nowrap cursor-pointer";
-var LINK = "font-sans text-[13px] text-grey-7 dark:text-grey-4 underline underline-offset-2 hover:text-navy dark:hover:text-beige cursor-pointer bg-transparent border-0 p-0";
-var ROW = "flex gap-3 items-start py-3 border-t border-beige-2 dark:border-navy-7 first:border-t-0";
-var LABEL = "flex flex-col gap-1 text-[12.5px] " + MUTED;
+-- 1. Who can open and edit the tracker
+create table if not exists public.editors (
+  email text primary key
+);
+insert into public.editors (email) values
+  ('vinz@neovara.io'),
+  ('greg@neovara.io'),
+  ('adithya@neovara.io')
+on conflict do nothing;
 
-var ui = {tab:"overview", f:{}, editing:null, month:null};
-try { var u = JSON.parse(sessionStorage.getItem(KEY + "-ui")); if(u) ui = Object.assign(ui, u); } catch(e){}
-var saveMsg = "", saveTimer = null;
+-- 2. Tracker data: one row per to-do, query, decision, visibility check, target and activity entry
+create table if not exists public.tracker_items (
+  kind        text not null,
+  id          text not null,
+  data        jsonb not null,
+  sort        integer not null default 0,
+  updated_at  timestamptz not null default now(),
+  updated_by  text,
+  primary key (kind, id)
+);
 
-function load(){
-  try { var s = localStorage.getItem(KEY); if(s){ var p = JSON.parse(s); if(p && p.tasks && p.queries) return p; } } catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULT));
-}
-function persist(){
-  try { localStorage.setItem(KEY, JSON.stringify(STATE)); saveMsg = "Saved in this browser"; }
-  catch(e){ saveMsg = "Couldn't save in this browser. Use Export to keep a copy."; }
-  var el = document.getElementById("savestate"); if(el) el.textContent = saveMsg;
-}
-function saveUi(){ try { sessionStorage.setItem(KEY + "-ui", JSON.stringify(ui)); } catch(e){} }
-function commit(note){
-  STATE.updated = new Date().toISOString();
-  if(note){ STATE.log.unshift({at:STATE.updated, what:note}); STATE.log = STATE.log.slice(0,40); }
-  render(); clearTimeout(saveTimer); saveTimer = setTimeout(persist, 300);
-}
-function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
-function d(s){ return new Date(s + "T00:00:00"); }
-function today(){ var t = new Date(); t.setHours(0,0,0,0); return t; }
-function fmt(s){ return s ? d(s).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) : "No date"; }
-function daysBetween(a,b){ return Math.round((b - a)/86400000); }
-function winOf(id){ return WINDOWS.filter(function(w){return w.id===id;})[0] || WINDOWS[3]; }
-function isOverdue(t){ return t.status!=="Done" && t.due && d(t.due) < today(); }
-function namedCount(m){ var r = STATE.results[m] || {}, n = 0; for(var q in r){ for(var a in r[q]){ if(r[q][a]==="Y"){ n++; break; } } } return n; }
-function runsFilled(m){ var r = STATE.results[m] || {}, n = 0; for(var q in r) for(var a in r[q]) if(r[q][a]) n++; return n; }
-function latestMonth(){ for(var i=MONTHS.length-1;i>=0;i--) if(runsFilled(MONTHS[i])>0) return MONTHS[i]; return null; }
-function progress(list){ var done = list.filter(function(t){return t.status==="Done";}).length; return {done:done,total:list.length,pct:list.length?Math.round(done*100/list.length):0}; }
-function opts(list, cur){ return list.map(function(o){ var v = Array.isArray(o)?o[0]:o, l = Array.isArray(o)?o[1]:o; return "<option value=\"" + esc(v) + "\"" + (v===cur?" selected":"") + ">" + esc(l) + "</option>"; }).join(""); }
+-- 3. Lock both tables down
+alter table public.editors       enable row level security;
+alter table public.tracker_items enable row level security;
 
-/* ---------- layout ---------- */
-var TABS = [["overview","Overview"],["schedule","Schedule"],["todos","To-dos"],["queries","Queries"],["visibility","AI visibility"],["decisions","Decisions"]];
-function render(){
-  var tab = ui.tab;
-  var body = {overview:vOverview,schedule:vSchedule,todos:vTodos,queries:vQueries,visibility:vVisibility,decisions:vDecisions}[tab]();
-  document.getElementById("root").innerHTML = vHeader() +
-    "<nav class=\"sticky top-0 z-10 bg-beige dark:bg-ink border-b border-beige-2 dark:border-navy-7\" style=\"padding-top:env(safe-area-inset-top,0px)\"><div class=\"max-w-[1180px] mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto\" role=\"tablist\">" +
-    TABS.map(function(t){ var on = t[0]===tab; return "<button role=\"tab\" aria-selected=\"" + on + "\" data-tab=\"" + t[0] + "\" class=\"font-sans text-sm font-medium whitespace-nowrap px-3 pt-3.5 pb-3 border-b-[3px] cursor-pointer bg-transparent " + (on ? "border-navy dark:border-beige text-navy dark:text-beige" : "border-transparent " + MUTED + " hover:text-navy dark:hover:text-beige") + "\">" + t[1] + "</button>"; }).join("") +
-    "</div></nav><main class=\"max-w-[1180px] mx-auto px-4 sm:px-6 pt-6\">" + body + "</main>" + vFooter();
-}
-function vHeader(){
-  var t = today(), day = daysBetween(START, t) + 1, all = progress(STATE.tasks), clock;
-  if(day < 1) clock = "<b class=\"font-semibold\">Starts in " + (1-day) + " day" + (1-day===1?"":"s") + "</b><span class=\"text-xs font-light opacity-75\">Day 1 is Monday 12 October</span>";
-  else if(day <= 90) clock = "<b class=\"font-semibold\">Day " + day + " of 90</b><span class=\"text-xs font-light opacity-75\">" + (90-day) + " days to the 9 January review</span>";
-  else clock = "<b class=\"font-semibold\">Build window complete</b><span class=\"text-xs font-light opacity-75\">Now in ongoing tracking</span>";
-  var pos = Math.max(0, Math.min(100, (day-1)/90*100));
-  var segs = WINDOWS.slice(0,3).map(function(w){
-    var p = progress(STATE.tasks.filter(function(x){return x.win===w.id;}));
-    return "<div><div class=\"lean h-3.5 bg-beige/15 overflow-hidden\"><i class=\"block h-full bg-beige transition-all\" style=\"width:" + p.pct + "%\"></i></div><div class=\"flex justify-between text-xs font-light mt-1.5 opacity-85\"><span>" + w.name + "</span><span>" + p.done + "/" + p.total + " done</span></div></div>";
-  }).join("");
-  return "<header class=\"relative overflow-hidden bg-navy dark:bg-[#0E0F20] text-beige pt-6 pb-8\" style=\"padding-top:calc(24px + env(safe-area-inset-top,0px))\">" +
-    "<div class=\"lean absolute -right-16 -top-10 w-24 h-80 bg-navy-7 opacity-60 pointer-events-none\"></div>" +
-    "<div class=\"relative max-w-[1180px] mx-auto px-4 sm:px-6\"><div class=\"flex justify-between items-center gap-4 flex-wrap\"><img src=\"" + document.getElementById("logo").getAttribute("data-src") + "\" alt=\"Neovara\" class=\"h-[26px] w-auto\"><span class=\"flex flex-col items-end text-right\">" + clock + "</span></div>" +
-    "<h1 class=\"font-bold text-[clamp(28px,4.4vw,44px)] leading-tight tracking-tight mt-7 mb-1.5\">AI visibility programme</h1>" +
-    "<p class=\"font-light max-w-[62ch] opacity-85 mb-6\">Make Neovara the answer AI assistants give for F&amp;B and hospitality AI in the UAE. " + all.done + " of " + all.total + " to-dos done.</p>" +
-    "<div class=\"relative grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-w-[760px]\">" + segs + "<div class=\"lean hidden sm:block absolute -top-1.5 w-[3px] h-[26px] bg-coral\" style=\"left:" + pos + "%\" title=\"Today\"></div></div></div></header>";
-}
-function vFooter(){
-  return "<footer class=\"max-w-[1180px] mx-auto px-4 sm:px-6 pb-10 pt-2 flex flex-wrap justify-between items-center gap-3 text-[12.5px] " + MUTED + "\">" +
-    "<span id=\"savestate\">" + (saveMsg || "Progress is saved in this browser") + "</span>" +
-    "<span class=\"flex flex-wrap gap-4 items-center\">" +
-    "<button class=\"" + LINK + "\" data-act=\"export\">Export progress</button>" +
-    "<label class=\"" + LINK + "\">Import progress<input type=\"file\" accept=\"application/json,.json\" data-act=\"import\" class=\"sr-only\"></label>" +
-    "<button class=\"" + LINK + " hover:!text-coral-6\" data-act=\"reset\">Reset to plan</button>" +
-    "<span>Last change " + (STATE.updated ? new Date(STATE.updated).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "—") + "</span></span></footer>";
-}
+-- 4. Helper: is the signed-in user on the editors list?
+create or replace function public.is_editor()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.editors
+    where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  );
+$$;
+grant execute on function public.is_editor() to anon, authenticated;
 
-/* ---------- pieces ---------- */
-function stat(v,l,n,inCard){ return "<div class=\"" + (inCard ? "bg-[#FAF8F4] dark:bg-navy" : "bg-white dark:bg-ink-2") + " border border-beige-2 dark:border-navy-7 rounded-xl px-4 py-4\"><div class=\"text-3xl font-bold leading-tight tabular-nums\">" + v + "</div><div class=\"text-[13px] font-medium mt-1\">" + l + "</div>" + (n ? "<div class=\"text-xs font-light " + MUTED + "\">" + esc(n) + "</div>" : "") + "</div>"; }
-function chip(t, extra){ return "<span class=\"rounded px-1.5 font-normal text-navy dark:text-beige " + (extra || "bg-powder dark:bg-navy-7") + "\">" + esc(t) + "</span>"; }
-function statusClass(s){ return s==="Done"||s==="Published" ? "text-ok" : s==="Blocked" ? "text-coral-6" : ""; }
-function taskRow(t, compact){
-  var od = isOverdue(t), done = t.status==="Done";
-  var meta = "<div class=\"flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] font-light mt-1 " + MUTED + "\">" + chip(t.ws) +
-    "<span>" + (od ? "<b class=\"text-coral-6 dark:text-coral font-semibold\">Overdue · </b>" : "") + (t.due ? "Due " + fmt(t.due) : "Ongoing") + "</span><span>" + esc(t.owner || "Unassigned") + "</span>" +
-    (t.q ? "<span>" + (t.q==="All" ? "All queries" : "Queries " + esc(t.q)) + "</span>" : "") + "</div>";
-  var side = compact ? "" : "<div class=\"flex sm:flex-col items-center sm:items-end gap-2 w-full sm:w-auto pl-7 sm:pl-0\"><select data-act=\"status\" data-id=\"" + t.id + "\" aria-label=\"Status\" class=\"" + FIELD + " font-medium " + statusClass(t.status) + "\">" + opts(STATUSES, t.status) + "</select><button class=\"" + LINK + "\" data-act=\"edit\" data-id=\"" + t.id + "\">Edit</button></div>";
-  return "<li class=\"" + ROW + " flex-wrap sm:flex-nowrap\"><label class=\"pt-0.5\"><input type=\"checkbox\" class=\"w-[18px] h-[18px] accent-navy dark:accent-beige cursor-pointer\" data-act=\"toggle\" data-id=\"" + t.id + "\"" + (done ? " checked" : "") + "><span class=\"sr-only\">Mark done</span></label>" +
-    "<div class=\"flex-1 min-w-0\"><div class=\"text-[14.5px] " + (done ? "line-through font-normal " + MUTED : "font-medium") + "\">" + esc(t.title) + "</div>" + meta +
-    (t.notes && !compact ? "<div class=\"text-[13px] mt-1 " + MUTED + "\">" + esc(t.notes) + "</div>" : "") + "</div>" + side + "</li>" +
-    (!compact && ui.editing===t.id ? editForm(t) : "");
-}
-function editForm(t){
-  return "<li class=\"list-none bg-[#FAF8F4] dark:bg-navy rounded-xl p-4 my-1 mb-3\"><form data-form=\"edit\" data-id=\"" + t.id + "\" class=\"flex flex-col gap-3\">" +
-    "<label class=\"" + LABEL + "\">To-do<input name=\"title\" class=\"" + FIELD + "\" value=\"" + esc(t.title) + "\" required></label>" +
-    "<div class=\"grid grid-cols-1 sm:grid-cols-3 gap-3\"><label class=\"" + LABEL + "\">Owner<input name=\"owner\" list=\"owners\" class=\"" + FIELD + "\" value=\"" + esc(t.owner) + "\"></label>" +
-    "<label class=\"" + LABEL + "\">Due date<input type=\"date\" name=\"due\" class=\"" + FIELD + "\" value=\"" + esc(t.due || "") + "\"></label>" +
-    "<label class=\"" + LABEL + "\">Window<select name=\"win\" class=\"" + FIELD + "\">" + opts(WINDOWS.map(function(w){return [w.id,w.name];}), t.win) + "</select></label></div>" +
-    "<label class=\"" + LABEL + "\">Notes<input name=\"notes\" class=\"" + FIELD + "\" value=\"" + esc(t.notes || "") + "\" placeholder=\"Links, blockers, who to chase\"></label>" +
-    "<div class=\"flex gap-4 items-center\"><button class=\"" + BTN + "\" type=\"submit\">Save to-do</button><button class=\"" + LINK + "\" type=\"button\" data-act=\"cancel\">Cancel</button><button class=\"" + LINK + " hover:!text-coral-6\" type=\"button\" data-act=\"delete\" data-id=\"" + t.id + "\">Delete to-do</button></div>" +
-    "<datalist id=\"owners\"><option>Vinz</option><option>Greg</option></datalist></form></li>";
-}
-function list(title, arr, empty){ return "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">" + title + "</h2>" + (arr.length ? "<ul>" + arr.map(function(x){return taskRow(x,true);}).join("") + "</ul>" : "<p class=\"font-light " + MUTED + "\">" + empty + "</p>") + "</section>"; }
+-- 5. Only signed-in people on the editors list can read or change anything
+drop policy if exists "editors read"   on public.tracker_items;
+drop policy if exists "editors insert" on public.tracker_items;
+drop policy if exists "editors update" on public.tracker_items;
+drop policy if exists "editors delete" on public.tracker_items;
+create policy "editors read"   on public.tracker_items for select to authenticated using (public.is_editor());
+create policy "editors insert" on public.tracker_items for insert to authenticated with check (public.is_editor());
+create policy "editors update" on public.tracker_items for update to authenticated using (public.is_editor()) with check (public.is_editor());
+create policy "editors delete" on public.tracker_items for delete to authenticated using (public.is_editor());
+-- (No policies on public.editors: nobody can read or change the list from the browser.
+--  Add or remove people here in the SQL editor or the Table Editor.)
 
-/* ---------- views ---------- */
-function vOverview(){
-  var t = today(), soon = new Date(t); soon.setDate(soon.getDate()+14);
-  var open = STATE.tasks.filter(function(x){return x.status!=="Done";});
-  var late = open.filter(isOverdue);
-  var due = open.filter(function(x){ return x.due && d(x.due) >= t && d(x.due) <= soon; }).sort(function(a,b){return a.due<b.due?-1:1;});
-  var blocked = open.filter(function(x){return x.status==="Blocked";});
-  var pend = STATE.decisions.filter(function(x){return x.status!=="Approved";});
-  var lm = latestMonth(), named = lm ? namedCount(lm) : null, tgt = lm ? STATE.targets[lm] : null;
-  var pub = STATE.queries.filter(function(q){return q.status==="Published"||q.status==="Refreshing";}).length;
-  var stats = "<div class=\"grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5\">" +
-    stat(late.length, "Overdue to-dos", late.length ? "Clear these first" : "Nothing overdue") + stat(due.length, "Due in the next 14 days", "") +
-    stat(pub + "/15", "Query pages live", "") +
-    stat(named==null ? "—" : named + "/15", "Queries where AI names Neovara", named==null ? "No visibility check logged yet" : MONTH_LABEL[lm] + (tgt!=null ? " · target " + tgt : "")) + "</div>";
-  var bars = WORKSTREAMS.map(function(w){ var p = progress(STATE.tasks.filter(function(x){return x.ws===w;})); if(!p.total) return "";
-    return "<div class=\"mb-3\"><div class=\"flex justify-between text-[13px] mb-1\"><span>" + w + "</span><span class=\"tabular-nums " + MUTED + "\">" + p.done + "/" + p.total + "</span></div><div class=\"h-2 bg-beige-1 dark:bg-navy-7 rounded overflow-hidden\"><i class=\"block h-full bg-steel\" style=\"width:" + p.pct + "%\"></i></div></div>"; }).join("");
-  var decis = "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Waiting on Greg</h2>" + (pend.length ?
-    "<ul class=\"mb-2\">" + pend.map(function(x){ return "<li class=\"flex justify-between gap-3 py-2 border-t border-beige-2 dark:border-navy-7 first:border-t-0 text-[13.5px]\"><b class=\"font-medium\">" + esc(x.title) + "</b><span class=\"font-light text-right " + MUTED + "\">" + esc(x.due) + "</span></li>"; }).join("") + "</ul><button class=\"" + LINK + "\" data-tab=\"decisions\">Open decisions</button>"
-    : "<p class=\"font-light " + MUTED + "\">All five decisions approved.</p>") + "</section>";
-  var log = "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Recent activity</h2>" + (STATE.log.length ?
-    "<ul>" + STATE.log.slice(0,6).map(function(l){ return "<li class=\"flex justify-between gap-3 py-2 border-t border-beige-2 dark:border-navy-7 first:border-t-0 text-[13.5px]\"><span>" + esc(l.what) + "</span><span class=\"font-light whitespace-nowrap " + MUTED + "\">" + new Date(l.at).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) + "</span></li>"; }).join("") + "</ul>"
-    : "<p class=\"font-light " + MUTED + "\">No changes yet. Tick off a to-do and it shows here.</p>") + "</section>";
-  return stats + "<div class=\"grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-5 items-start\"><div>" +
-    (late.length ? list("Overdue", late, "") : "") + list("Due in the next 14 days", due, "Nothing due in the next two weeks. Check the schedule for what's coming.") +
-    (blocked.length ? list("Blocked", blocked, "") : "") + "</div><div>" + decis +
-    "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Progress by workstream</h2>" + bars + "</section>" + log + "</div></div>";
-}
+-- 6. Turn on live updates for the tracker table
+alter table public.tracker_items replica identity full;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'tracker_items'
+  ) then
+    alter publication supabase_realtime add table public.tracker_items;
+  end if;
+end $$;
 
-function vSchedule(){
-  var span = daysBetween(START, END), t = today();
-  function x(s){ return Math.max(0, Math.min(100, daysBetween(START, d(s))/span*100)); }
-  var tpos = daysBetween(START, t)/span*100;
-  var months = [["2026-10-12","Oct"],["2026-11-01","Nov"],["2026-12-01","Dec"],["2027-01-01","Jan"]];
-  var dated = STATE.tasks.filter(function(k){return k.due;});
-  var bars = WINDOWS.slice(0,3).map(function(w){ return "<div class=\"relative h-[34px] mb-1.5\"><div class=\"lean-bar absolute top-0 h-full bg-navy dark:bg-steel text-beige dark:text-white flex items-center px-5 text-[13px] font-medium\" style=\"left:" + x(w.from) + "%;width:" + (x(w.to)-x(w.from)) + "%\">" + w.name + "</div></div>"; }).join("");
-  function lane(label, inner){ return "<div class=\"relative h-6 border-t border-beige-2 dark:border-navy-7\"><em class=\"not-italic absolute -left-[118px] w-[110px] top-1 text-[11.5px] " + MUTED + "\">" + label + "</em>" + inner + "</div>"; }
-  function dot(pos, cls, title){ return "<i class=\"absolute top-[9px] -ml-1 w-[9px] h-[9px] rounded-full " + cls + "\" style=\"left:" + pos + "%\" title=\"" + esc(title) + "\"></i>"; }
-  var dues = dated.map(function(k){ return dot(x(k.due), k.status==="Done" ? "bg-ok" : "bg-navy-7/75 dark:bg-beige", k.title + " · " + fmt(k.due)); }).join("");
-  var blog = MILESTONES.filter(function(m){return m.k==="blog";}).map(function(m){ return dot(x(m.d), "bg-steel", m.t + ", " + fmt(m.d)); }).join("");
-  var track = MILESTONES.filter(function(m){return m.k==="track";}).map(function(m){ return dot(x(m.d), "border-2 border-steel", m.t + ", " + fmt(m.d)); }).join("");
-  var gantt = "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">90-day timeline<small class=\"" + SMALL + "\">" + (t < START ? "Starts Monday 12 October" : t > END ? "Build window complete" : "Today is day " + (daysBetween(START,t)+1)) + "</small></h2>" +
-    "<div class=\"overflow-x-auto\"><div class=\"relative pt-6 ml-[118px] mr-2 min-w-[560px]\">" +
-    months.map(function(m){ return "<span class=\"absolute top-0 text-xs pl-0.5 " + MUTED + "\" style=\"left:" + x(m[0]) + "%\">" + m[1] + "<i class=\"absolute left-0 top-[18px] h-[150px] border-l border-dashed border-beige-2 dark:border-navy-7\"></i></span>"; }).join("") +
-    bars + lane("Due dates", dues) + lane("Blog slots", blog) + lane("Visibility checks", track) +
-    (t >= START && t <= END ? "<div class=\"absolute top-[18px] bottom-0 w-0.5 bg-coral z-[2]\" style=\"left:" + tpos + "%\"><span class=\"absolute -top-0.5 left-1.5 text-[11px] font-semibold text-coral-6 bg-white dark:bg-ink-2 px-1\">Today</span></div>" : "") +
-    "</div></div><p class=\"mt-3 " + SMALL + "\">Hover a dot for the item and date. Blog slots follow the 1st and 3rd Wednesday cadence.</p></section>";
-  var items = dated.map(function(k){return {date:k.due,kind:"task",task:k};})
-    .concat(MILESTONES.map(function(m){return {date:m.d,kind:m.k,title:m.t};}))
-    .concat(STATE.decisions.filter(function(k){return k.date;}).map(function(k){return {date:k.date,kind:"decision",title:"Decision: " + k.title,done:k.status==="Approved"};}))
-    .sort(function(a,b){ return a.date<b.date?-1:a.date>b.date?1:0; });
-  var weeks = {}, order = [];
-  items.forEach(function(it){ var dt = d(it.date), mon = new Date(dt); mon.setDate(dt.getDate() - ((dt.getDay()+6)%7)); var k = mon.getFullYear()+"-"+mon.getMonth()+"-"+mon.getDate(); if(!weeks[k]){ weeks[k] = {mon:mon, items:[]}; order.push(k); } weeks[k].items.push(it); });
-  var thisMon = new Date(t); thisMon.setDate(t.getDate() - ((t.getDay()+6)%7));
-  var markers = {blog:"rounded-full bg-steel", track:"rounded-full border-2 border-steel", decision:"rotate-45 bg-navy dark:bg-beige rounded-[2px]"};
-  var agenda = order.map(function(k){
-    var mon = weeks[k].mon, sun = new Date(mon); sun.setDate(mon.getDate()+6);
-    var cur = mon.getTime()===thisMon.getTime(), past = sun < t;
-    return "<div class=\"py-3 border-t border-beige-2 dark:border-navy-7 first:border-t-0 first:pt-0" + (past ? " opacity-60" : "") + "\"><div class=\"flex gap-2.5 items-baseline text-[13px] mb-0.5\"><b class=\"font-semibold\">" + mon.toLocaleDateString("en-GB",{day:"numeric",month:"short"}) + " – " + sun.toLocaleDateString("en-GB",{day:"numeric",month:"short"}) + "</b>" + (cur ? "<span class=\"text-xs font-semibold text-coral-6\">This week</span>" : "") + "</div><ul>" +
-      weeks[k].items.map(function(it){
-        if(it.kind==="task") return taskRow(it.task, true);
-        return "<li class=\"" + ROW + "\"><span class=\"w-[18px] flex-none flex justify-center pt-1.5\"><i class=\"block w-[9px] h-[9px] " + markers[it.kind] + "\"></i></span><div class=\"flex-1\"><div class=\"text-[14.5px] font-medium" + (it.done ? " line-through " + MUTED : "") + "\">" + esc(it.title) + "</div><div class=\"text-[12.5px] font-light mt-1 " + MUTED + "\">" + d(it.date).toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"}) + "</div></div></li>";
-      }).join("") + "</ul></div>";
-  }).join("");
-  var ongoing = STATE.tasks.filter(function(k){return !k.due;});
-  return gantt + "<div class=\"grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-5 items-start\"><section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Week by week</h2>" + agenda + "</section>" +
-    "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Ongoing, no fixed date</h2><ul>" + ongoing.map(function(k){return taskRow(k,true);}).join("") + "</ul></section></div>";
-}
+-- To add someone later:
+--   insert into public.editors (email) values ('new.person@your-domain.com');
+-- To remove someone:
+--   delete from public.editors where email = 'old.person@your-domain.com';
+-- Neovara AI Visibility tracker: Supabase setup
+-- Run once in Supabase: SQL Editor > New query > paste > Run.
+-- Then edit the emails in step 1 to your team's real addresses.
 
-function vTodos(){
-  var f = ui.f || {};
-  var shown = STATE.tasks.filter(function(t){
-    return (!f.win || t.win===f.win) && (!f.ws || t.ws===f.ws) && (!f.st || (f.st==="open" ? t.status!=="Done" : t.status===f.st)) &&
-      (!f.q || (t.title + " " + t.owner + " " + (t.notes||"")).toLowerCase().indexOf(f.q.toLowerCase()) >= 0);
-  });
-  var groups = WINDOWS.map(function(w){
-    var ts = shown.filter(function(t){return t.win===w.id;}).sort(function(a,b){ return (a.due||"9")<(b.due||"9")?-1:1; });
-    if(!ts.length) return "";
-    var p = progress(STATE.tasks.filter(function(t){return t.win===w.id;}));
-    return "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">" + w.name + "<small class=\"" + SMALL + "\">" + (w.to ? fmt(w.from) + " – " + fmt(w.to) : "From " + fmt(w.from)) + " · " + p.done + "/" + p.total + " done</small></h2><ul>" + ts.map(function(t){return taskRow(t,false);}).join("") + "</ul></section>";
-  }).join("");
-  function sel(name, o, label){ return "<label class=\"" + LABEL + "\">" + label + "<select data-filter=\"" + name + "\" class=\"" + FIELD + "\"><option value=\"\">All</option>" + opts(o, f[name]) + "</select></label>"; }
-  return "<section class=\"" + CARD + " grid grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_1.5fr] gap-3\">" +
-    sel("win", WINDOWS.map(function(w){return [w.id,w.name];}), "Window") + sel("ws", WORKSTREAMS, "Workstream") + sel("st", [["open","Not done"]].concat(STATUSES), "Status") +
-    "<label class=\"" + LABEL + " col-span-2 lg:col-span-1\">Search<input type=\"search\" data-filter=\"q\" class=\"" + FIELD + " w-full\" value=\"" + esc(f.q || "") + "\" placeholder=\"Title, owner, notes\"></label></section>" +
-    "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Add a to-do</h2><form data-form=\"add\" class=\"grid grid-cols-2 lg:grid-cols-[2.4fr_1.2fr_1fr_1fr_auto] gap-2\">" +
-    "<input name=\"title\" class=\"" + FIELD + " col-span-2 lg:col-span-1\" placeholder=\"What needs doing?\" required aria-label=\"To-do\">" +
-    "<select name=\"ws\" class=\"" + FIELD + "\" aria-label=\"Workstream\">" + opts(WORKSTREAMS) + "</select>" +
-    "<select name=\"win\" class=\"" + FIELD + "\" aria-label=\"Window\">" + opts(WINDOWS.map(function(w){return [w.id,w.name];})) + "</select>" +
-    "<input type=\"date\" name=\"due\" class=\"" + FIELD + "\" aria-label=\"Due date\"><button class=\"" + BTN + "\" type=\"submit\">Add to-do</button></form></section>" +
-    (groups || "<section class=\"" + CARD + "\"><p class=\"font-light " + MUTED + "\">No to-dos match these filters. Clear a filter to see more.</p></section>");
-}
+-- 1. Who can open and edit the tracker
+create table if not exists public.editors (
+  email text primary key
+);
+insert into public.editors (email) values
+  ('vinz@neovara.io'),
+  ('greg@neovara.io'),
+  ('adithya@neovara.io')
+on conflict do nothing;
 
-var STAGE_BG = {Awareness:"bg-[#EEF3F9] dark:bg-navy-7", Consideration:"bg-powder dark:bg-navy-7", Evaluation:"bg-beige-1 dark:bg-navy-7", Decision:"bg-beige-2 dark:bg-navy-7"};
-var TH = "text-left font-medium text-[12.5px] px-2.5 py-2 border-b border-beige-2 dark:border-navy-7 whitespace-nowrap " + MUTED;
-var TD = "px-2.5 py-2.5 border-b border-beige-2 dark:border-navy-7 align-top";
-function vQueries(){
-  var rows = STATE.queries.map(function(q){
-    var pips = MONTHS.map(function(m){ var r = (STATE.results[m]||{})[q.n] || {}; var any = ASSISTANTS.some(function(a){return r[a];}); var y = ASSISTANTS.filter(function(a){return r[a]==="Y";}).length;
-      return "<i class=\"block w-3 h-3 rounded-[3px] border " + (y ? "bg-ok border-ok" : any ? "bg-[#FAF8F4] dark:bg-navy border-grey-4" : "border-beige-2 dark:border-navy-7") + "\" title=\"" + MONTH_LABEL[m] + ": " + (any ? y + " of 5 assistants" : "not checked") + "\"></i>"; }).join("");
-    return "<tr><td class=\"" + TD + " tabular-nums w-7 " + MUTED + "\">" + q.n + "</td><td class=\"" + TD + " min-w-[320px]\"><div class=\"font-medium mb-0.5\">" + esc(q.q) + "</div><div class=\"flex flex-wrap gap-x-3.5 gap-y-1 text-[12.5px] font-light " + MUTED + "\">" + chip(q.stage, STAGE_BG[q.stage]) + "<span>" + esc(q.build) + "</span></div>" +
-      "<input class=\"" + FIELD + " w-full mt-2 text-[12.5px]\" data-act=\"qurl\" data-n=\"" + q.n + "\" value=\"" + esc(q.url || "") + "\" placeholder=\"Page URL once live\" aria-label=\"Page URL for query " + q.n + "\"></td>" +
-      "<td class=\"" + TD + " whitespace-nowrap\">" + winOf(q.wave).name + "<div class=\"text-[12.5px] font-light " + MUTED + "\">Due " + fmt(q.due) + "</div></td>" +
-      "<td class=\"" + TD + "\"><select data-act=\"qstatus\" data-n=\"" + q.n + "\" aria-label=\"Page status\" class=\"" + FIELD + " font-medium " + statusClass(q.status) + "\">" + opts(PAGE_STATUSES, q.status) + "</select></td>" +
-      "<td class=\"" + TD + "\"><div class=\"flex gap-1 pt-1\">" + pips + "</div></td></tr>";
-  }).join("");
-  return "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Top 15 queries<small class=\"" + SMALL + "\">One page per query. Squares show each month's AI visibility, oldest first.</small></h2><div class=\"overflow-x-auto\"><table class=\"w-full border-collapse text-[13.5px]\"><thead><tr>" +
-    ["#","Query and what we build","Wave","Page status","Named by AI"].map(function(h){return "<th class=\"" + TH + "\">" + h + "</th>";}).join("") + "</tr></thead><tbody>" + rows + "</tbody></table></div></section>";
-}
+-- 2. Tracker data: one row per to-do, query, decision, visibility check, target and activity entry
+create table if not exists public.tracker_items (
+  kind        text not null,
+  id          text not null,
+  data        jsonb not null,
+  sort        integer not null default 0,
+  updated_at  timestamptz not null default now(),
+  updated_by  text,
+  primary key (kind, id)
+);
 
-function vVisibility(){
-  var m = ui.month || latestMonth() || MONTHS[0], r = STATE.results[m] || {};
-  var grid = STATE.queries.map(function(q){ var row = r[q.n] || {};
-    return "<tr><td class=\"px-1.5 py-1.5 border-b border-beige-2 dark:border-navy-7 tabular-nums " + MUTED + "\">" + q.n + "</td><td class=\"px-1.5 py-1.5 border-b border-beige-2 dark:border-navy-7 min-w-[240px] text-[13px]\">" + esc(q.q) + "</td>" +
-      ASSISTANTS.map(function(a){ var v = row[a] || "";
-        var cls = v==="Y" ? "bg-ok border-ok text-white font-medium" : v==="N" ? "bg-[#FAF8F4] dark:bg-navy text-navy dark:text-beige border-beige-2 dark:border-navy-7" : "bg-white dark:bg-ink-2 border-beige-2 dark:border-navy-7 " + MUTED;
-        return "<td class=\"px-1.5 py-1.5 border-b border-beige-2 dark:border-navy-7\"><button data-act=\"cell\" data-n=\"" + q.n + "\" data-a=\"" + a + "\" class=\"font-sans text-[12.5px] w-full min-w-[76px] border rounded px-1 py-1.5 cursor-pointer " + cls + "\" aria-label=\"" + esc(a + ", query " + q.n + ": " + (v==="Y" ? "named" : v==="N" ? "not named" : "not checked")) + "\">" + (v==="Y" ? "Named" : v==="N" ? "No" : "—") + "</button></td>"; }).join("") + "</tr>"; }).join("");
-  var chart = MONTHS.slice(1).map(function(mm){
-    var n = runsFilled(mm) ? namedCount(mm) : null, tg = STATE.targets[mm];
-    return "<div class=\"flex flex-col items-center gap-1 h-full text-xs " + MUTED + "\"><div class=\"relative flex-1 w-full max-w-[44px] border-b border-beige-2 dark:border-navy-7\"><i class=\"absolute bottom-0 inset-x-0 border-[1.5px] border-b-0 border-dashed border-steel\" style=\"height:" + (tg/15*100) + "%\" title=\"Target " + tg + "\"></i>" +
-      (n != null ? "<i class=\"absolute bottom-0 inset-x-[7px] " + (n >= tg ? "bg-ok" : "bg-navy dark:bg-beige") + "\" style=\"height:" + (n/15*100) + "%\" title=\"Named " + n + "\"></i>" : "") +
-      "</div><b class=\"text-[15px] text-navy dark:text-beige tabular-nums\">" + (n==null ? "—" : n) + "<span class=\"font-light text-xs " + MUTED + "\">/" + tg + "</span></b><span>" + MONTH_LABEL[mm].replace(" 20"," ’") + "</span></div>"; }).join("");
-  return "<div class=\"grid grid-cols-1 lg:grid-cols-[1.5fr_1fr] gap-5 items-start\"><section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Named vs target<small class=\"" + SMALL + "\">Queries where at least one assistant names Neovara</small></h2><div class=\"grid grid-cols-6 gap-2.5 items-end h-[190px]\">" + chart + "</div>" +
-    "<p class=\"mt-3 " + SMALL + "\"><span class=\"inline-block w-2.5 h-2.5 mr-1.5 align-[-1px] border-[1.5px] border-dashed border-steel\"></span>Target <span class=\"inline-block w-2.5 h-2.5 ml-3 mr-1.5 align-[-1px] bg-navy dark:bg-beige\"></span>Actual</p></section>" +
-    "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">" + MONTH_LABEL[m] + "</h2><div class=\"grid grid-cols-2 gap-3 mb-4\">" + stat(namedCount(m) + "/15", "Queries named", "", true) + stat(runsFilled(m) + "/75", "Checks logged", "", true) + "</div>" +
-    "<label class=\"" + LABEL + "\">Month<select data-act=\"month\" class=\"" + FIELD + "\">" + opts(MONTHS.map(function(x){return [x, MONTH_LABEL[x]];}), m) + "</select></label></section></div>" +
-    "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Log this month's checks<small class=\"" + SMALL + "\">Ask each query in each assistant. Click a cell to cycle: not checked, Named, No.</small></h2><div class=\"overflow-x-auto\"><table class=\"w-full border-collapse text-[13.5px]\"><thead><tr><th class=\"" + TH + "\">#</th><th class=\"" + TH + "\">Query</th>" + ASSISTANTS.map(function(a){return "<th class=\"" + TH + "\">" + a + "</th>";}).join("") + "</tr></thead><tbody>" + grid + "</tbody></table></div></section>";
-}
+-- 3. Lock both tables down
+alter table public.editors       enable row level security;
+alter table public.tracker_items enable row level security;
 
-function vDecisions(){
-  return "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Decisions needed from Greg<small class=\"" + SMALL + "\">These unblock the roadmap</small></h2><ul>" + STATE.decisions.map(function(x,i){
-    var ok = x.status==="Approved";
-    return "<li class=\"flex flex-wrap sm:flex-nowrap gap-3.5 items-start py-3.5 border-t border-beige-2 dark:border-navy-7 first:border-t-0\"><span class=\"font-bold text-lg w-[22px]\">" + (i+1) + "</span><div class=\"flex-1 min-w-0\"><div class=\"text-[14.5px] font-medium" + (ok ? " line-through " + MUTED : "") + "\">" + esc(x.title) + "</div><div class=\"text-[13px] mt-1 " + MUTED + "\">" + esc(x.why) + "</div><div class=\"flex flex-wrap gap-x-3.5 text-[12.5px] font-light mt-1 " + MUTED + "\"><span>When: " + esc(x.due) + "</span>" + (ok && x.approvedAt ? "<span>Approved " + new Date(x.approvedAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"}) + "</span>" : "") + "</div></div>" +
-      "<button data-act=\"decide\" data-id=\"" + x.id + "\" class=\"" + (ok ? "font-sans text-[13.5px] rounded px-3.5 py-2 border border-beige-2 dark:border-navy-7 bg-transparent cursor-pointer " + MUTED : BTN) + "\">" + (ok ? "Undo approval" : "Mark approved") + "</button></li>";
-  }).join("") + "</ul></section>" +
-  "<section class=\"" + CARD + "\"><h2 class=\"" + H2 + "\">Risks</h2><ul>" + [
-    ["Broad queries stay out of reach","Large firms hold \"best AI company in UAE\". We win the niche first, then widen."],
-    ["Results lag publishing","Assistants refresh on their own schedules. We track monthly and keep refreshing pages."],
-    ["Baseline delayed","Without HubSpot AEO access, checks are logged by hand on the AI visibility tab."]].map(function(r){
-      return "<li class=\"py-2 border-t border-beige-2 dark:border-navy-7 first:border-t-0 text-[13.5px]\"><b class=\"font-medium block\">" + esc(r[0]) + "</b><span class=\"font-light " + MUTED + "\">" + esc(r[1]) + "</span></li>"; }).join("") + "</ul></section>";
-}
+-- 4. Helper: is the signed-in user on the editors list?
+create or replace function public.is_editor()
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.editors
+    where lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  );
+$$;
+grant execute on function public.is_editor() to anon, authenticated;
 
-/* ---------- events ---------- */
-function findTask(id){ return STATE.tasks.filter(function(t){return t.id===id;})[0]; }
-document.addEventListener("click", function(e){
-  var el = e.target.closest("[data-tab],[data-act]"); if(!el) return;
-  if(el.dataset.tab){ ui.tab = el.dataset.tab; ui.editing = null; saveUi(); render(); window.scrollTo(0,0); return; }
-  var a = el.dataset.act;
-  if(a==="edit"){ ui.editing = ui.editing===el.dataset.id ? null : el.dataset.id; render(); }
-  else if(a==="cancel"){ ui.editing = null; render(); }
-  else if(a==="delete"){ var t = findTask(el.dataset.id); if(t && confirm("Delete \"" + t.title + "\"?")){ STATE.tasks = STATE.tasks.filter(function(x){return x.id!==t.id;}); ui.editing = null; commit("Deleted: " + t.title); } }
-  else if(a==="cell"){ var n = el.dataset.n, asn = el.dataset.a, m = ui.month || latestMonth() || MONTHS[0];
-    STATE.results[m] = STATE.results[m] || {}; STATE.results[m][n] = STATE.results[m][n] || {};
-    var v = STATE.results[m][n][asn] || ""; v = v==="" ? "Y" : v==="Y" ? "N" : "";
-    if(v) STATE.results[m][n][asn] = v; else delete STATE.results[m][n][asn];
-    ui.month = m; saveUi(); commit(null); }
-  else if(a==="decide"){ var x = STATE.decisions.filter(function(y){return y.id===el.dataset.id;})[0];
-    if(x.status==="Approved"){ x.status = "Pending"; x.approvedAt = null; commit("Approval undone: " + x.title); }
-    else { x.status = "Approved"; x.approvedAt = new Date().toISOString(); commit("Approved: " + x.title); } }
-  else if(a==="export"){ var blob = new Blob([JSON.stringify(STATE, null, 2)], {type:"application/json"}); var link = document.createElement("a");
-    link.href = URL.createObjectURL(blob); link.download = "neovara-ai-visibility-" + new Date().toISOString().slice(0,10) + ".json"; document.body.appendChild(link); link.click(); link.remove(); setTimeout(function(){ URL.revokeObjectURL(link.href); }, 1000); }
-  else if(a==="reset"){ if(confirm("Reset everything to the original plan? Your ticks, notes and visibility checks in this browser will be cleared. Export first if you want a copy.")){ STATE = JSON.parse(JSON.stringify(DEFAULT)); ui.editing = null; commit(null); saveMsg = "Reset to the original plan"; render(); } }
-});
-document.addEventListener("change", function(e){
-  var el = e.target;
-  if(el.dataset.filter){ ui.f[el.dataset.filter] = el.value; saveUi(); render(); return; }
-  var a = el.dataset.act;
-  if(a==="toggle"){ var t = findTask(el.dataset.id); t.status = el.checked ? "Done" : "To do"; commit((el.checked ? "Done: " : "Reopened: ") + t.title); }
-  else if(a==="status"){ var t2 = findTask(el.dataset.id); t2.status = el.value; commit(t2.title + " → " + el.value); }
-  else if(a==="qstatus"){ var q = STATE.queries[+el.dataset.n-1]; q.status = el.value; commit("Query " + q.n + " page → " + el.value); }
-  else if(a==="qurl"){ var q2 = STATE.queries[+el.dataset.n-1]; q2.url = el.value.trim(); commit(null); }
-  else if(a==="month"){ ui.month = el.value; saveUi(); render(); }
-  else if(a==="import" && el.files && el.files[0]){ var rd = new FileReader();
-    rd.onload = function(){ try { var p = JSON.parse(rd.result); if(!p.tasks || !p.queries || !p.decisions) throw 0; STATE = p; commit("Imported progress file"); saveMsg = "Imported. Saved in this browser."; render(); }
-      catch(_){ alert("That file isn't a tracker export. Choose a .json file saved with Export progress."); } };
-    rd.readAsText(el.files[0]); }
-});
-document.addEventListener("input", function(e){
-  if(e.target.dataset.filter==="q"){ ui.f.q = e.target.value; saveUi(); clearTimeout(window.__qt);
-    window.__qt = setTimeout(function(){ var pos = e.target.selectionStart; render(); var s = document.querySelector("[data-filter=q]"); if(s){ s.focus(); try { s.setSelectionRange(pos,pos); } catch(_){} } }, 250); }
-});
-document.addEventListener("submit", function(e){
-  e.preventDefault(); var f = e.target, fd = new FormData(f);
-  if(f.dataset.form==="add"){ STATE.tasks.push({id:"t" + Date.now().toString(36), title:fd.get("title").trim(), ws:fd.get("ws"), win:fd.get("win"), due:fd.get("due") || null, owner:"Vinz", status:"To do", q:"", notes:""}); commit("Added: " + fd.get("title").trim()); }
-  else if(f.dataset.form==="edit"){ var t = findTask(f.dataset.id); t.title = fd.get("title").trim(); t.owner = fd.get("owner").trim(); t.due = fd.get("due") || null; t.win = fd.get("win"); t.notes = fd.get("notes").trim(); ui.editing = null; commit("Edited: " + t.title); }
-});
-render();
-})();
-</script>
-</body>
-</html>
+-- 5. Only signed-in people on the editors list can read or change anything
+drop policy if exists "editors read"   on public.tracker_items;
+drop policy if exists "editors insert" on public.tracker_items;
+drop policy if exists "editors update" on public.tracker_items;
+drop policy if exists "editors delete" on public.tracker_items;
+create policy "editors read"   on public.tracker_items for select to authenticated using (public.is_editor());
+create policy "editors insert" on public.tracker_items for insert to authenticated with check (public.is_editor());
+create policy "editors update" on public.tracker_items for update to authenticated using (public.is_editor()) with check (public.is_editor());
+create policy "editors delete" on public.tracker_items for delete to authenticated using (public.is_editor());
+-- (No policies on public.editors: nobody can read or change the list from the browser.
+--  Add or remove people here in the SQL editor or the Table Editor.)
+
+-- 6. Turn on live updates for the tracker table
+alter table public.tracker_items replica identity full;
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = 'tracker_items'
+  ) then
+    alter publication supabase_realtime add table public.tracker_items;
+  end if;
+end $$;
+
+-- To add someone later:
+--   insert into public.editors (email) values ('new.person@your-domain.com');
+-- To remove someone:
+--   delete from public.editors where email = 'old.person@your-domain.com';
