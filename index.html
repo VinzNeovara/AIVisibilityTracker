@@ -8,8 +8,19 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script>tailwind.config={darkMode:"media",theme:{extend:{colors:{navy:{DEFAULT:"#1F2144",7:"#2C2F5C",9:"#161832"},beige:{DEFAULT:"#F5F1EB",1:"#EDE7DB",2:"#E2D9C8"},powder:"#DDE7F2",steel:"#5F7FA3",coral:{DEFAULT:"#E86F51",6:"#C9553B"},grey:{4:"#A4AAB3",7:"#6C7078"},ok:"#3F7D5C",ink:{DEFAULT:"#121427",2:"#1B1D3A"}},fontFamily:{sans:["Poppins","system-ui","-apple-system","Segoe UI","Roboto","sans-serif"]}}}};</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<!-- ============================================================
+     PASTE YOUR SUPABASE DETAILS HERE (Project Settings > API).
+     Use the "sb_publishable_EjVaTZ3x2io2lxlJrWq0fw_vKqBAqUp" key only. Never the service_role key.
+     Leave the placeholders to run in single-browser preview mode.
+     ============================================================ -->
+<script>
+window.TRACKER_CONFIG = {
+  supabaseUrl: "https://YOUR-PROJECT-REF.supabase.co",
+  supabaseAnonKey: "sb_publishable_EjVaTZ3x2io2lxlJrWq0fw_vKqBAqUp"
+};
+</script>
 <style>
-  /* The Lean: Neovara's angled signature, plus things Tailwind can't express cleanly */
   .lean{transform:skewX(-24deg)}
   .lean-bar{clip-path:polygon(10px 0,100% 0,calc(100% - 10px) 100%,0 100%)}
   :focus-visible{outline:2px solid #E86F51;outline-offset:2px}
@@ -26,8 +37,17 @@
 <script>(function(){
 "use strict";
 var KEY = "neovara-ai-visibility-v1";
+var TABLE = "tracker_items";
 var DEFAULT = JSON.parse(document.getElementById("default-state").textContent);
-var STATE = load();
+var CFG = window.TRACKER_CONFIG || {};
+var LIVE = !!(CFG.supabaseUrl && CFG.supabaseAnonKey && CFG.supabaseUrl.indexOf("YOUR-") < 0 && window.supabase && window.supabase.createClient);
+var sb = LIVE ? window.supabase.createClient(CFG.supabaseUrl, CFG.supabaseAnonKey) : null;
+
+var rows = {};               // "kind:id" -> {kind,id,data,sort,updated_at,updated_by}
+var STATE = null;
+var phase = LIVE ? "loading" : "local";   // loading | signin | linksent | notallowed | ready | error | local
+var session = null, authedFor = null, channel = null, conn = LIVE ? "connecting" : "local", wasDown = false;
+var online = [], errMsg = "", pendingRender = false;
 var START = new Date("2026-10-12T00:00:00"), END = new Date("2027-01-09T00:00:00");
 var ASSISTANTS = ["ChatGPT","Gemini","Claude","Perplexity","Google AI Overviews"];
 var MONTHS = ["2026-10","2026-11","2026-12","2027-01","2027-02","2027-03","2027-04"];
@@ -58,25 +78,150 @@ var LINK = "font-sans text-[13px] text-grey-7 dark:text-grey-4 underline underli
 var ROW = "flex gap-3 items-start py-3 border-t border-beige-2 dark:border-navy-7 first:border-t-0";
 var LABEL = "flex flex-col gap-1 text-[12.5px] " + MUTED;
 
+
+/* class strings */
+
+var CARD = "bg-white dark:bg-ink-2 border border-beige-2 dark:border-navy-7 rounded-xl p-5 sm:p-6 mb-5";
+var H2 = "text-[17px] font-semibold mb-4 flex flex-wrap items-baseline gap-x-3 gap-y-1";
+var SMALL = "text-[12.5px] font-light text-grey-7 dark:text-grey-4";
+var MUTED = "text-grey-7 dark:text-grey-4";
+var FIELD = "font-sans text-[13.5px] text-navy dark:text-beige bg-white dark:bg-ink-2 border border-beige-2 dark:border-navy-7 rounded px-2 py-1.5 max-w-full";
+var BTN = "font-sans text-[13.5px] font-medium bg-navy text-beige dark:bg-beige dark:text-navy rounded px-3.5 py-2 hover:bg-navy-7 dark:hover:bg-beige-2 whitespace-nowrap cursor-pointer";
+var LINK = "font-sans text-[13px] text-grey-7 dark:text-grey-4 underline underline-offset-2 hover:text-navy dark:hover:text-beige cursor-pointer bg-transparent border-0 p-0";
+var ROW = "flex gap-3 items-start py-3 border-t border-beige-2 dark:border-navy-7 first:border-t-0";
+var LABEL = "flex flex-col gap-1 text-[12.5px] " + MUTED;
+
+
 var ui = {tab:"overview", f:{}, editing:null, month:null};
 try { var u = JSON.parse(sessionStorage.getItem(KEY + "-ui")); if(u) ui = Object.assign(ui, u); } catch(e){}
-var saveMsg = "", saveTimer = null;
-
-function load(){
-  try { var s = localStorage.getItem(KEY); if(s){ var p = JSON.parse(s); if(p && p.tasks && p.queries) return p; } } catch(e){}
-  return JSON.parse(JSON.stringify(DEFAULT));
-}
-function persist(){
-  try { localStorage.setItem(KEY, JSON.stringify(STATE)); saveMsg = "Saved in this browser"; }
-  catch(e){ saveMsg = "Couldn't save in this browser. Use Export to keep a copy."; }
-  var el = document.getElementById("savestate"); if(el) el.textContent = saveMsg;
-}
 function saveUi(){ try { sessionStorage.setItem(KEY + "-ui", JSON.stringify(ui)); } catch(e){} }
-function commit(note){
-  STATE.updated = new Date().toISOString();
-  if(note){ STATE.log.unshift({at:STATE.updated, what:note}); STATE.log = STATE.log.slice(0,40); }
-  render(); clearTimeout(saveTimer); saveTimer = setTimeout(persist, 300);
+
+/* ---------- state <-> rows ---------- */
+function rowsFromState(s){
+  var out = [];
+  s.tasks.forEach(function(t,i){ out.push({kind:"task", id:t.id, data:t, sort:i}); });
+  s.queries.forEach(function(q){ out.push({kind:"query", id:String(q.n), data:q, sort:q.n}); });
+  s.decisions.forEach(function(x,i){ out.push({kind:"decision", id:x.id, data:x, sort:i}); });
+  Object.keys(s.targets || {}).forEach(function(m){ out.push({kind:"target", id:m, data:{v:s.targets[m]}, sort:0}); });
+  Object.keys(s.results || {}).forEach(function(m){ Object.keys(s.results[m]).forEach(function(n){ Object.keys(s.results[m][n]).forEach(function(a){
+    out.push({kind:"result", id:m + "|" + n + "|" + a, data:{m:m, n:String(n), a:a, v:s.results[m][n][a]}, sort:0}); }); }); });
+  (s.log || []).forEach(function(l,i){ out.push({kind:"log", id:"imp" + i + "-" + l.at, data:l, sort:0}); });
+  return out;
 }
+function rebuild(){
+  var all = Object.keys(rows).map(function(k){ return rows[k]; });
+  function of(k){ return all.filter(function(r){ return r.kind === k; }); }
+  function bySort(a,b){ return (a.sort - b.sort) || (a.id < b.id ? -1 : 1); }
+  var s = {tasks:of("task").sort(bySort).map(function(r){ return r.data; }),
+    queries:of("query").sort(bySort).map(function(r){ return r.data; }),
+    decisions:of("decision").sort(bySort).map(function(r){ return r.data; }),
+    targets:{}, results:{}, log:[], updated:null};
+  of("target").forEach(function(r){ s.targets[r.id] = r.data.v; });
+  of("result").forEach(function(r){ var x = r.data; if(!x.v) return; s.results[x.m] = s.results[x.m] || {}; s.results[x.m][x.n] = s.results[x.m][x.n] || {}; s.results[x.m][x.n][x.a] = x.v; });
+  s.log = of("log").map(function(r){ return r.data; }).sort(function(a,b){ return a.at < b.at ? 1 : -1; }).slice(0, 40);
+  all.forEach(function(r){ if(r.updated_at && (!s.updated || r.updated_at > s.updated)) s.updated = r.updated_at; });
+  STATE = s;
+}
+function me(){
+  if(!session) return "You";
+  var e = (session.user && session.user.email) || "";
+  var n = e.split("@")[0].split(/[._-]/)[0] || "Someone";
+  return n.charAt(0).toUpperCase() + n.slice(1);
+}
+function R(kind, id, data, sort){
+  var prev = rows[kind + ":" + id];
+  return {kind:kind, id:String(id), data:data, sort:sort != null ? sort : (prev ? prev.sort : 0), updated_at:new Date().toISOString(), updated_by:me()};
+}
+
+/* ---------- writing ---------- */
+function write(ups, dels, note){
+  if(note){ var at = new Date().toISOString(); ups.push(R("log", "l" + Date.now().toString(36) + Math.random().toString(36).slice(2,6), {at:at, what:note, by:me()})); }
+  ups.forEach(function(r){ rows[r.kind + ":" + r.id] = r; });
+  dels.forEach(function(d){ delete rows[d.kind + ":" + d.id]; });
+  rebuild(); render();
+  if(!LIVE){ saveLocal(); return; }
+  if(ups.length) sb.from(TABLE).upsert(ups, {onConflict:"kind,id"}).then(check);
+  dels.forEach(function(d){ sb.from(TABLE).delete().match({kind:d.kind, id:d.id}).then(check); });
+}
+function check(res){
+  if(res && res.error){ errMsg = res.error.message || "Save failed"; setConn("error"); loadAll(); }
+}
+function saveLocal(){ try { localStorage.setItem(KEY + "-rows", JSON.stringify(rows)); } catch(e){} }
+function loadLocal(){
+  try { var s = localStorage.getItem(KEY + "-rows"); if(s){ rows = JSON.parse(s); rebuild(); if(STATE.tasks.length) return; } } catch(e){}
+  rows = {}; rowsFromState(DEFAULT).forEach(function(r){ rows[r.kind + ":" + r.id] = r; }); rebuild();
+}
+
+/* ---------- live sync ---------- */
+function setConn(c){ conn = c; var el = document.getElementById("conn"); if(el) el.outerHTML = connBadge(); }
+function fetchAllNonLog(){
+  var out = [], size = 1000;
+  function page(from){
+    return sb.from(TABLE).select("*").neq("kind","log").order("kind").order("id").range(from, from + size - 1).then(function(res){
+      if(res.error) throw res.error;
+      out = out.concat(res.data || []);
+      return (res.data || []).length === size ? page(from + size) : out;
+    });
+  }
+  return page(0);
+}
+function loadAll(){
+  return Promise.all([
+    fetchAllNonLog(),
+    sb.from(TABLE).select("*").eq("kind","log").order("updated_at",{ascending:false}).limit(50).then(function(r){ if(r.error) throw r.error; return r.data || []; })
+  ]).then(function(res){
+    var list = res[0].concat(res[1]);
+    if(!list.some(function(r){ return r.kind === "task"; })){
+      // First run: seed the plan. ignoreDuplicates keeps this safe if two people open it at once.
+      return sb.from(TABLE).upsert(rowsFromState(DEFAULT).map(function(r){ r.updated_at = new Date().toISOString(); r.updated_by = me(); return r; }), {onConflict:"kind,id", ignoreDuplicates:true})
+        .then(function(r){ if(r.error) throw r.error; return loadAll(); });
+    }
+    rows = {}; list.forEach(function(r){ rows[r.kind + ":" + r.id] = r; });
+    rebuild(); phase = "ready"; if(conn === "error") conn = "live"; render();
+  }).catch(function(e){ errMsg = (e && e.message) || "Couldn't load the tracker"; phase = phase === "ready" ? "ready" : "error"; setConn("error"); render(); });
+}
+function subscribe(){
+  if(channel) return;
+  channel = sb.channel("tracker-live", {config:{presence:{key:me()}}})
+    .on("postgres_changes", {event:"*", schema:"public", table:TABLE}, function(p){
+      if(p.eventType === "DELETE"){ var o = p.old || {}; delete rows[o.kind + ":" + o.id]; }
+      else { var n = p.new; if(!n || !n.kind) return; var cur = rows[n.kind + ":" + n.id]; if(cur && cur.updated_at && n.updated_at && cur.updated_at > n.updated_at) return; rows[n.kind + ":" + n.id] = n; }
+      rebuild(); softRender();
+    })
+    .on("presence", {event:"sync"}, function(){ online = Object.keys(channel.presenceState()); setConn(conn); updatePresence(); })
+    .subscribe(function(status){
+      if(status === "SUBSCRIBED"){ setConn("live"); channel.track({since:Date.now()}); if(wasDown){ wasDown = false; loadAll(); } }
+      else if(status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED"){ wasDown = true; setConn("reconnecting"); }
+    });
+}
+function teardown(){ if(channel){ sb.removeChannel(channel); channel = null; } online = []; }
+function afterAuth(){
+  if(!session){ authedFor = null; teardown(); if(phase !== "linksent") phase = "signin"; render(); return; }
+  var email = session.user && session.user.email;
+  if(authedFor === email) return;
+  authedFor = email; phase = "loading"; render();
+  sb.rpc("is_editor").then(function(r){
+    if(r.error){ errMsg = r.error.message; phase = "error"; render(); return; }
+    if(!r.data){ phase = "notallowed"; render(); return; }
+    loadAll().then(subscribe);
+  });
+}
+function softRender(){
+  var a = document.activeElement;
+  if(a && document.getElementById("root").contains(a) && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "checkbox"))){ pendingRender = true; return; }
+  render();
+}
+document.addEventListener("focusout", function(){ if(pendingRender){ setTimeout(function(){ var a = document.activeElement; if(!(a && (a.tagName === "INPUT" && a.type !== "checkbox"))){ pendingRender = false; render(); } }, 0); } });
+document.addEventListener("visibilitychange", function(){ if(LIVE && phase === "ready" && document.visibilityState === "visible") loadAll(); });
+
+function connBadge(){
+  var map = {live:["bg-ok","Live"], connecting:["bg-grey-4","Connecting…"], reconnecting:["bg-coral","Reconnecting…"], error:["bg-coral","Sync problem"], local:["bg-grey-4","Preview: this browser only"]};
+  var c = map[conn] || map.connecting;
+  var who = conn === "live" && online.length ? " · " + online.map(esc).join(", ") + " online" : "";
+  return "<span id=\"conn\" class=\"inline-flex items-center gap-1.5 text-xs font-light\" title=\"" + esc(conn === "error" ? errMsg : "") + "\"><i class=\"block w-2 h-2 rounded-full " + c[0] + "\"></i>" + c[1] + who + "</span>";
+}
+function updatePresence(){ var el = document.getElementById("conn"); if(el) el.outerHTML = connBadge(); }
+
 function esc(s){ return String(s == null ? "" : s).replace(/[&<>"']/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 function d(s){ return new Date(s + "T00:00:00"); }
 function today(){ var t = new Date(); t.setHours(0,0,0,0); return t; }
@@ -89,16 +234,32 @@ function runsFilled(m){ var r = STATE.results[m] || {}, n = 0; for(var q in r) f
 function latestMonth(){ for(var i=MONTHS.length-1;i>=0;i--) if(runsFilled(MONTHS[i])>0) return MONTHS[i]; return null; }
 function progress(list){ var done = list.filter(function(t){return t.status==="Done";}).length; return {done:done,total:list.length,pct:list.length?Math.round(done*100/list.length):0}; }
 function opts(list, cur){ return list.map(function(o){ var v = Array.isArray(o)?o[0]:o, l = Array.isArray(o)?o[1]:o; return "<option value=\"" + esc(v) + "\"" + (v===cur?" selected":"") + ">" + esc(l) + "</option>"; }).join(""); }
-
 /* ---------- layout ---------- */
 var TABS = [["overview","Overview"],["schedule","Schedule"],["todos","To-dos"],["queries","Queries"],["visibility","AI visibility"],["decisions","Decisions"]];
 function render(){
+  var root = document.getElementById("root");
+  if(LIVE && phase !== "ready"){ root.innerHTML = vGate(); return; }
+  pendingRender = false;
   var tab = ui.tab;
   var body = {overview:vOverview,schedule:vSchedule,todos:vTodos,queries:vQueries,visibility:vVisibility,decisions:vDecisions}[tab]();
-  document.getElementById("root").innerHTML = vHeader() +
+  root.innerHTML = vHeader() +
     "<nav class=\"sticky top-0 z-10 bg-beige dark:bg-ink border-b border-beige-2 dark:border-navy-7\" style=\"padding-top:env(safe-area-inset-top,0px)\"><div class=\"max-w-[1180px] mx-auto px-4 sm:px-6 flex gap-1 overflow-x-auto\" role=\"tablist\">" +
     TABS.map(function(t){ var on = t[0]===tab; return "<button role=\"tab\" aria-selected=\"" + on + "\" data-tab=\"" + t[0] + "\" class=\"font-sans text-sm font-medium whitespace-nowrap px-3 pt-3.5 pb-3 border-b-[3px] cursor-pointer bg-transparent " + (on ? "border-navy dark:border-beige text-navy dark:text-beige" : "border-transparent " + MUTED + " hover:text-navy dark:hover:text-beige") + "\">" + t[1] + "</button>"; }).join("") +
     "</div></nav><main class=\"max-w-[1180px] mx-auto px-4 sm:px-6 pt-6\">" + body + "</main>" + vFooter();
+}
+function gateShell(inner){
+  return "<header class=\"relative overflow-hidden bg-navy dark:bg-[#0E0F20] text-beige pb-24\" style=\"padding-top:calc(24px + env(safe-area-inset-top,0px))\"><div class=\"lean absolute -right-16 -top-10 w-24 h-80 bg-navy-7 opacity-60\"></div>" +
+    "<div class=\"relative max-w-[560px] mx-auto px-4\"><img src=\"" + document.getElementById("logo").getAttribute("data-src") + "\" alt=\"Neovara\" class=\"h-[26px] w-auto\"><h1 class=\"font-bold text-3xl leading-tight mt-8\">AI visibility programme</h1><p class=\"font-light opacity-85 mt-1\">Shared tracker for the Neovara team.</p></div></header>" +
+    "<main class=\"max-w-[560px] mx-auto px-4 -mt-14 relative\"><section class=\"" + CARD + "\">" + inner + "</section></main>";
+}
+function vGate(){
+  if(phase === "loading") return gateShell("<p class=\"font-light " + MUTED + "\">Loading the tracker…</p>");
+  if(phase === "signin") return gateShell("<h2 class=\"" + H2 + "\">Sign in to open the tracker</h2><p class=\"text-[13.5px] mb-4 " + MUTED + "\">We'll email you a one-time sign-in link. Only people on the team list can open it.</p>" +
+    "<form data-form=\"signin\" class=\"flex flex-col sm:flex-row gap-2\"><input type=\"email\" name=\"email\" required autocomplete=\"email\" placeholder=\"you@company.com\" aria-label=\"Work email\" class=\"" + FIELD + " flex-1\"><button class=\"" + BTN + "\" type=\"submit\">Email me a sign-in link</button></form>" +
+    (errMsg ? "<p class=\"text-[13px] mt-3 text-coral-6\">" + esc(errMsg) + "</p>" : ""));
+  if(phase === "linksent") return gateShell("<h2 class=\"" + H2 + "\">Check your inbox</h2><p class=\"text-[13.5px] " + MUTED + "\">We sent a sign-in link to <b class=\"font-medium text-navy dark:text-beige\">" + esc(ui.lastEmail || "your email") + "</b>. Open it on this device and you'll land back here, signed in.</p><button class=\"" + LINK + " mt-3\" data-act=\"retry-signin\">Use a different email</button>");
+  if(phase === "notallowed") return gateShell("<h2 class=\"" + H2 + "\">You're signed in, but not on the team list</h2><p class=\"text-[13.5px] " + MUTED + "\">" + esc(session && session.user.email) + " can't open this tracker yet. Ask Vinz to add your email in Supabase.</p><button class=\"" + LINK + " mt-3\" data-act=\"signout\">Sign out</button>");
+  return gateShell("<h2 class=\"" + H2 + "\">Couldn't connect</h2><p class=\"text-[13.5px] " + MUTED + "\">" + esc(errMsg || "Something went wrong reaching the database.") + "</p><button class=\"" + BTN + " mt-3\" data-act=\"reload\">Try again</button>");
 }
 function vHeader(){
   var t = today(), day = daysBetween(START, t) + 1, all = progress(STATE.tasks), clock;
@@ -114,19 +275,20 @@ function vHeader(){
     "<div class=\"lean absolute -right-16 -top-10 w-24 h-80 bg-navy-7 opacity-60 pointer-events-none\"></div>" +
     "<div class=\"relative max-w-[1180px] mx-auto px-4 sm:px-6\"><div class=\"flex justify-between items-center gap-4 flex-wrap\"><img src=\"" + document.getElementById("logo").getAttribute("data-src") + "\" alt=\"Neovara\" class=\"h-[26px] w-auto\"><span class=\"flex flex-col items-end text-right\">" + clock + "</span></div>" +
     "<h1 class=\"font-bold text-[clamp(28px,4.4vw,44px)] leading-tight tracking-tight mt-7 mb-1.5\">AI visibility programme</h1>" +
-    "<p class=\"font-light max-w-[62ch] opacity-85 mb-6\">Make Neovara the answer AI assistants give for F&amp;B and hospitality AI in the UAE. " + all.done + " of " + all.total + " to-dos done.</p>" +
+    "<p class=\"font-light max-w-[62ch] opacity-85 mb-2\">Make Neovara the answer AI assistants give for F&amp;B and hospitality AI in the UAE. " + all.done + " of " + all.total + " to-dos done.</p>" +
+    "<div class=\"mb-5 opacity-90\">" + connBadge() + "</div>" +
     "<div class=\"relative grid grid-cols-1 sm:grid-cols-3 gap-2.5 max-w-[760px]\">" + segs + "<div class=\"lean hidden sm:block absolute -top-1.5 w-[3px] h-[26px] bg-coral\" style=\"left:" + pos + "%\" title=\"Today\"></div></div></div></header>";
 }
 function vFooter(){
-  return "<footer class=\"max-w-[1180px] mx-auto px-4 sm:px-6 pb-10 pt-2 flex flex-wrap justify-between items-center gap-3 text-[12.5px] " + MUTED + "\">" +
-    "<span id=\"savestate\">" + (saveMsg || "Progress is saved in this browser") + "</span>" +
+  var who = LIVE ? "<span>Signed in as " + esc(session && session.user.email) + " · <button class=\"" + LINK + "\" data-act=\"signout\">Sign out</button></span>"
+                 : "<span>Preview mode: not connected to Supabase, so changes stay in this browser.</span>";
+  return "<footer class=\"max-w-[1180px] mx-auto px-4 sm:px-6 pb-10 pt-2 flex flex-wrap justify-between items-center gap-3 text-[12.5px] " + MUTED + "\">" + who +
     "<span class=\"flex flex-wrap gap-4 items-center\">" +
     "<button class=\"" + LINK + "\" data-act=\"export\">Export progress</button>" +
     "<label class=\"" + LINK + "\">Import progress<input type=\"file\" accept=\"application/json,.json\" data-act=\"import\" class=\"sr-only\"></label>" +
-    "<button class=\"" + LINK + " hover:!text-coral-6\" data-act=\"reset\">Reset to plan</button>" +
+    (LIVE ? "" : "<button class=\"" + LINK + " hover:!text-coral-6\" data-act=\"reset\">Reset to plan</button>") +
     "<span>Last change " + (STATE.updated ? new Date(STATE.updated).toLocaleString("en-GB",{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"}) : "—") + "</span></span></footer>";
 }
-
 /* ---------- pieces ---------- */
 function stat(v,l,n,inCard){ return "<div class=\"" + (inCard ? "bg-[#FAF8F4] dark:bg-navy" : "bg-white dark:bg-ink-2") + " border border-beige-2 dark:border-navy-7 rounded-xl px-4 py-4\"><div class=\"text-3xl font-bold leading-tight tabular-nums\">" + v + "</div><div class=\"text-[13px] font-medium mt-1\">" + l + "</div>" + (n ? "<div class=\"text-xs font-light " + MUTED + "\">" + esc(n) + "</div>" : "") + "</div>"; }
 function chip(t, extra){ return "<span class=\"rounded px-1.5 font-normal text-navy dark:text-beige " + (extra || "bg-powder dark:bg-navy-7") + "\">" + esc(t) + "</span>"; }
@@ -297,38 +459,44 @@ function vDecisions(){
 
 /* ---------- events ---------- */
 function findTask(id){ return STATE.tasks.filter(function(t){return t.id===id;})[0]; }
+function copy(o){ return JSON.parse(JSON.stringify(o)); }
 document.addEventListener("click", function(e){
   var el = e.target.closest("[data-tab],[data-act]"); if(!el) return;
   if(el.dataset.tab){ ui.tab = el.dataset.tab; ui.editing = null; saveUi(); render(); window.scrollTo(0,0); return; }
   var a = el.dataset.act;
   if(a==="edit"){ ui.editing = ui.editing===el.dataset.id ? null : el.dataset.id; render(); }
   else if(a==="cancel"){ ui.editing = null; render(); }
-  else if(a==="delete"){ var t = findTask(el.dataset.id); if(t && confirm("Delete \"" + t.title + "\"?")){ STATE.tasks = STATE.tasks.filter(function(x){return x.id!==t.id;}); ui.editing = null; commit("Deleted: " + t.title); } }
-  else if(a==="cell"){ var n = el.dataset.n, asn = el.dataset.a, m = ui.month || latestMonth() || MONTHS[0];
-    STATE.results[m] = STATE.results[m] || {}; STATE.results[m][n] = STATE.results[m][n] || {};
-    var v = STATE.results[m][n][asn] || ""; v = v==="" ? "Y" : v==="Y" ? "N" : "";
-    if(v) STATE.results[m][n][asn] = v; else delete STATE.results[m][n][asn];
-    ui.month = m; saveUi(); commit(null); }
-  else if(a==="decide"){ var x = STATE.decisions.filter(function(y){return y.id===el.dataset.id;})[0];
-    if(x.status==="Approved"){ x.status = "Pending"; x.approvedAt = null; commit("Approval undone: " + x.title); }
-    else { x.status = "Approved"; x.approvedAt = new Date().toISOString(); commit("Approved: " + x.title); } }
+  else if(a==="delete"){ var t = findTask(el.dataset.id); if(t && confirm("Delete \"" + t.title + "\" for everyone?")){ ui.editing = null; write([], [{kind:"task", id:t.id}], "Deleted: " + t.title); } }
+  else if(a==="cell"){ var n = el.dataset.n, asn = el.dataset.a, m = ui.month || latestMonth() || MONTHS[0], id = m + "|" + n + "|" + asn;
+    var cur = ((STATE.results[m]||{})[n]||{})[asn] || "", v = cur==="" ? "Y" : cur==="Y" ? "N" : "";
+    ui.month = m; saveUi();
+    if(v) write([R("result", id, {m:m, n:String(n), a:asn, v:v})], []); else write([], [{kind:"result", id:id}]); }
+  else if(a==="decide"){ var x = copy(STATE.decisions.filter(function(y){return y.id===el.dataset.id;})[0]);
+    if(x.status==="Approved"){ x.status = "Pending"; x.approvedAt = null; write([R("decision", x.id, x)], [], "Approval undone: " + x.title); }
+    else { x.status = "Approved"; x.approvedAt = new Date().toISOString(); write([R("decision", x.id, x)], [], "Approved: " + x.title); } }
   else if(a==="export"){ var blob = new Blob([JSON.stringify(STATE, null, 2)], {type:"application/json"}); var link = document.createElement("a");
     link.href = URL.createObjectURL(blob); link.download = "neovara-ai-visibility-" + new Date().toISOString().slice(0,10) + ".json"; document.body.appendChild(link); link.click(); link.remove(); setTimeout(function(){ URL.revokeObjectURL(link.href); }, 1000); }
-  else if(a==="reset"){ if(confirm("Reset everything to the original plan? Your ticks, notes and visibility checks in this browser will be cleared. Export first if you want a copy.")){ STATE = JSON.parse(JSON.stringify(DEFAULT)); ui.editing = null; commit(null); saveMsg = "Reset to the original plan"; render(); } }
+  else if(a==="reset"){ if(confirm("Reset everything to the original plan? Changes in this browser will be cleared.")){ rows = {}; try { localStorage.removeItem(KEY + "-rows"); } catch(_){} loadLocal(); render(); } }
+  else if(a==="signout"){ sb.auth.signOut(); }
+  else if(a==="retry-signin"){ phase = "signin"; render(); }
+  else if(a==="reload"){ location.reload(); }
 });
 document.addEventListener("change", function(e){
   var el = e.target;
   if(el.dataset.filter){ ui.f[el.dataset.filter] = el.value; saveUi(); render(); return; }
   var a = el.dataset.act;
-  if(a==="toggle"){ var t = findTask(el.dataset.id); t.status = el.checked ? "Done" : "To do"; commit((el.checked ? "Done: " : "Reopened: ") + t.title); }
-  else if(a==="status"){ var t2 = findTask(el.dataset.id); t2.status = el.value; commit(t2.title + " → " + el.value); }
-  else if(a==="qstatus"){ var q = STATE.queries[+el.dataset.n-1]; q.status = el.value; commit("Query " + q.n + " page → " + el.value); }
-  else if(a==="qurl"){ var q2 = STATE.queries[+el.dataset.n-1]; q2.url = el.value.trim(); commit(null); }
+  if(a==="toggle"){ var t = copy(findTask(el.dataset.id)); t.status = el.checked ? "Done" : "To do"; write([R("task", t.id, t)], [], (el.checked ? "Done: " : "Reopened: ") + t.title); }
+  else if(a==="status"){ var t2 = copy(findTask(el.dataset.id)); t2.status = el.value; write([R("task", t2.id, t2)], [], t2.title + " → " + el.value); }
+  else if(a==="qstatus"){ var q = copy(STATE.queries.filter(function(x){return String(x.n)===el.dataset.n;})[0]); q.status = el.value; write([R("query", String(q.n), q)], [], "Query " + q.n + " page → " + el.value); }
+  else if(a==="qurl"){ var q2 = copy(STATE.queries.filter(function(x){return String(x.n)===el.dataset.n;})[0]); q2.url = el.value.trim(); write([R("query", String(q2.n), q2)], []); }
   else if(a==="month"){ ui.month = el.value; saveUi(); render(); }
   else if(a==="import" && el.files && el.files[0]){ var rd = new FileReader();
-    rd.onload = function(){ try { var p = JSON.parse(rd.result); if(!p.tasks || !p.queries || !p.decisions) throw 0; STATE = p; commit("Imported progress file"); saveMsg = "Imported. Saved in this browser."; render(); }
+    rd.onload = function(){ try { var p = JSON.parse(rd.result); if(!p.tasks || !p.queries || !p.decisions) throw 0;
+        if(LIVE && !confirm("Import this file? It overwrites matching to-dos, queries, decisions and checks for everyone.")) return;
+        var ups = rowsFromState(p).filter(function(r){ return r.kind !== "log"; }).map(function(r){ return R(r.kind, r.id, r.data, r.sort); });
+        write(ups, [], "Imported progress file"); }
       catch(_){ alert("That file isn't a tracker export. Choose a .json file saved with Export progress."); } };
-    rd.readAsText(el.files[0]); }
+    rd.readAsText(el.files[0]); el.value = ""; }
 });
 document.addEventListener("input", function(e){
   if(e.target.dataset.filter==="q"){ ui.f.q = e.target.value; saveUi(); clearTimeout(window.__qt);
@@ -336,10 +504,22 @@ document.addEventListener("input", function(e){
 });
 document.addEventListener("submit", function(e){
   e.preventDefault(); var f = e.target, fd = new FormData(f);
-  if(f.dataset.form==="add"){ STATE.tasks.push({id:"t" + Date.now().toString(36), title:fd.get("title").trim(), ws:fd.get("ws"), win:fd.get("win"), due:fd.get("due") || null, owner:"Vinz", status:"To do", q:"", notes:""}); commit("Added: " + fd.get("title").trim()); }
-  else if(f.dataset.form==="edit"){ var t = findTask(f.dataset.id); t.title = fd.get("title").trim(); t.owner = fd.get("owner").trim(); t.due = fd.get("due") || null; t.win = fd.get("win"); t.notes = fd.get("notes").trim(); ui.editing = null; commit("Edited: " + t.title); }
+  if(f.dataset.form==="signin"){ var email = String(fd.get("email")).trim(); ui.lastEmail = email; saveUi(); errMsg = "";
+    var btn = f.querySelector("button"); btn.disabled = true; btn.textContent = "Sending…";
+    sb.auth.signInWithOtp({email:email, options:{emailRedirectTo:location.origin + location.pathname, shouldCreateUser:true}}).then(function(r){
+      if(r.error){ errMsg = r.error.message; phase = "signin"; } else { phase = "linksent"; } render(); });
+    return; }
+  if(f.dataset.form==="add"){ var maxSort = Object.keys(rows).reduce(function(mx,k){ var r = rows[k]; return r.kind==="task" && r.sort > mx ? r.sort : mx; }, 0);
+    var t = {id:"t" + Date.now().toString(36), title:String(fd.get("title")).trim(), ws:fd.get("ws"), win:fd.get("win"), due:fd.get("due") || null, owner:me()==="You" ? "Vinz" : me(), status:"To do", q:"", notes:""};
+    write([R("task", t.id, t, maxSort + 1)], [], "Added: " + t.title); }
+  else if(f.dataset.form==="edit"){ var t2 = copy(findTask(f.dataset.id)); t2.title = String(fd.get("title")).trim(); t2.owner = String(fd.get("owner")).trim(); t2.due = fd.get("due") || null; t2.win = fd.get("win"); t2.notes = String(fd.get("notes")).trim(); ui.editing = null; write([R("task", t2.id, t2)], [], "Edited: " + t2.title); }
 });
-render();
+
+/* ---------- start ---------- */
+if(LIVE){
+  render();
+  sb.auth.onAuthStateChange(function(ev, s){ session = s; setTimeout(afterAuth, 0); });
+} else { loadLocal(); render(); }
 })();
 </script>
 </body>
